@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>게임 로그 말풍선 생성기</title>
+<meta name="description" content="티스토리용 비주얼 노벨 게임 로그 말풍선 HTML 생성기">
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="style.css">
+<!-- 캐릭터 편집창 미리보기용 로그 CSS (script.js가 채움) -->
+<style id="vnBase"></style>
+</head>
+<body>
+<div class="app" id="app" data-view="edit">
+
+  <header class="top">
+    <div class="brand">
+      <h1>게임 로그 말풍선 생성기</h1>
+      <p>말풍선을 편집하고, 미리보고, 코드를 복사해 티스토리에 붙여넣으세요.</p>
+    </div>
+    <div class="top-actions">
+      <button type="button" id="btnUndo" class="icon-btn" title="실행 취소 (Ctrl+Z)" aria-label="실행 취소" disabled>↶</button>
+      <button type="button" id="btnRedo" class="icon-btn" title="다시 실행 (Ctrl+Shift+Z)" aria-label="다시 실행" disabled>↷</button>
+      <button type="button" id="btnTheme" class="icon-btn" title="다크 모드 전환" aria-label="다크 모드 전환">🌙</button>
+    </div>
+  </header>
+
+  <main class="main">
+    <!-- ========== 왼쪽: 편집 패널 ========== -->
+    <section class="pane left" id="paneLeft" aria-label="편집 패널">
+      <div class="fixed-top">
+        <div class="row3">
+          <button type="button" class="btn" id="btnSave">로그 저장</button>
+          <button type="button" class="btn" id="btnLoad">불러오기</button>
+          <button type="button" class="btn" id="btnNew">새로 만들기</button>
+        </div>
+        <div class="title-row">
+          <input type="text" id="logTitle" class="inp" placeholder="로그 제목 (저장 파일 이름에 사용)" maxlength="80">
+          <button type="button" class="btn small" id="btnRecent">최근 작업</button>
+        </div>
+        <div class="save-state" id="saveState" aria-live="polite">자동 저장 대기 중</div>
+
+        <details class="cfg" id="cfg" open>
+          <summary>로그 설정 <span class="sum-sub">프레임 · 캐릭터</span></summary>
+          <div class="sec">
+            <div class="sec-h">프레임 너비</div>
+            <div class="seg" id="segFrame" role="group" aria-label="프레임 너비">
+              <button type="button" data-v="basic" class="on">기본</button>
+              <button type="button" data-v="full">넓게 (100%)</button>
+            </div>
+            <label class="check"><input type="checkbox" id="chkExpand"> 모바일에서 화면 양옆까지 확장</label>
+          </div>
+          <div class="sec">
+            <div class="sec-h">
+              <span>캐릭터 아이콘</span>
+              <button type="button" class="btn small" id="btnAddChar">+ 캐릭터 추가</button>
+            </div>
+            <div class="chars" id="charList"></div>
+          </div>
+        </details>
+
+        <div class="adds">
+          <div class="adds-row">
+            <button type="button" class="btn primary" data-add="in">+ 수신 말풍선</button>
+            <button type="button" class="btn primary" data-add="out">+ 발신 말풍선</button>
+            <button type="button" class="btn" data-add="narr">+ 행동 지문</button>
+          </div>
+          <div class="adds-row2">
+            <button type="button" class="btn" data-add="img">+ 이미지 첨부</button>
+            <div class="insert-row">
+              <span>삽입 위치</span>
+              <div class="seg mini" id="segInsert" role="group" aria-label="삽입 위치">
+                <button type="button" data-v="end" class="on">맨 끝</button>
+                <button type="button" data-v="after">선택 블록 아래</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="list-head">
+          <span>블록 <b id="blkCount">0</b>개</span>
+          <span class="lh-btns">
+            <button type="button" class="link" id="btnFoldAll">모두 접기</button>
+            <button type="button" class="link" id="btnUnfoldAll">모두 펼치기</button>
+          </span>
+        </div>
+      </div>
+      <div class="blocks" id="blockList"></div>
+    </section>
+
+    <!-- ========== 오른쪽: 미리보기 / 코드 ========== -->
+    <section class="pane right" id="paneRight" aria-label="미리보기 및 코드">
+      <div class="tabs" role="tablist">
+        <button type="button" role="tab" data-tab="preview" class="on">미리보기</button>
+        <button type="button" role="tab" data-tab="code">코드</button>
+        <div class="tabs-r" id="pvDevice">
+          <div class="seg mini" role="group" aria-label="미리보기 너비">
+            <button type="button" data-v="pc" class="on">PC</button>
+            <button type="button" data-v="mobile">모바일</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="tabpane" id="tabPreview">
+        <div class="pv-stage" id="pvStage">
+          <iframe id="pvFrame" title="로그 미리보기"></iframe>
+        </div>
+      </div>
+
+      <div class="tabpane" id="tabCode" hidden>
+        <div class="code-bar">
+          <button type="button" class="btn" id="btnCodeRefresh">코드 새로고침</button>
+          <button type="button" class="btn primary" id="btnCodeCopy">전체 코드 복사</button>
+          <button type="button" class="btn" id="btnCodeHtml">HTML 파일 다운로드</button>
+          <button type="button" class="btn" id="btnCodeTxt">TXT 파일 다운로드</button>
+        </div>
+        <div class="code-info" id="codeInfo"></div>
+        <textarea id="codeOut" readonly spellcheck="false" aria-label="생성된 HTML 코드"></textarea>
+        <p class="code-help">티스토리 글쓰기 화면에서 <b>HTML 모드</b>로 바꾼 뒤 전체 코드를 붙여넣으세요. 모든 스타일은 <code>.vnlog</code> 안에서만 적용되어 스킨과 다른 글에 영향을 주지 않습니다.</p>
+      </div>
+    </section>
+  </main>
+
+  <!-- 모바일 하단 탭 -->
+  <nav class="bottom" id="bottomBar" aria-label="화면 전환">
+    <button type="button" data-view="edit" class="on">편집</button>
+    <button type="button" data-view="preview">미리보기</button>
+    <button type="button" data-view="code">코드</button>
+  </nav>
+</div>
+
+<!-- 모달/토스트/팔레트 -->
+<div id="modalRoot"></div>
+<div id="palette" class="palette" hidden></div>
+<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+<!-- 숨김 파일 입력 -->
+<input type="file" id="fileJson" accept=".json,application/json" hidden>
+<input type="file" id="fileImg" accept="image/*" hidden>
+<input type="file" id="fileIcon" accept="image/*" hidden>
+
+<script src="script.js"></script>
+</body>
+</html>
